@@ -19,10 +19,10 @@ mpl.rcdefaults()
 
 
 # Load Poincaré cut data from example_1 in symmetry flux coordinates (s,\vartheta,\varphi)
-poincare_sthetaphi = np.genfromtxt("../EXAMPLES/example_1/poincare_plot_vpar_0_sthetaphi.dat")
+poincare_sthetaphi = np.genfromtxt("poincare_plot_phi_0_sthetaphi.dat")
 
 # Load Poincaré cut data from example_1 in cylindrical coordinates (R,\varphi,Z)
-poincare_rphiz = np.genfromtxt("../EXAMPLES/example_1/poincare_plot_vpar_0_rphiz.dat")
+poincare_rphiz = np.genfromtxt("poincare_plot_phi_0_rphiz.dat")
 
 # Plot Poincaré sections and evolution of the normalized parallel adiabatic invariant as a function of banana bounces
 fig, (ax1, ax2) = plt.subplots(1, 2)
