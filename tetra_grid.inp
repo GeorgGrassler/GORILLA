@@ -10,6 +10,10 @@
  n2 = 40 ,
  !Rectangular: nZ, Field-aligned: ntheta                          		
  n3 = 40 ,
+ !Field-aligned: ntheta alternating number of vertices per ring
+ alternating_vert_per_ring = .false.,
+ !Field-aligned: variation amplitude
+ alternating_amplitude = 5,
 !
  !Grid kind
  !1 ... rectangular grid for axisymmetric EFIT data (g-file)
