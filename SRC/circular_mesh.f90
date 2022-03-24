@@ -325,10 +325,15 @@ subroutine calc_mesh(verts_per_ring, n_slices, points, n_tetras, &
 
         do segment = 1, prisms_per_ring(ring)
 
-            u = points((/1, 3/), base_idx + modulo(lower_off, n_verts_lower))
-            v = points((/1, 3/), base_idx + n_verts_lower + modulo(upper_off, n_verts_upper))
-            p = points((/1, 3/), base_idx + n_verts_lower + modulo(upper_off + 1, n_verts_upper))
-            q = points((/1, 3/), base_idx + modulo(lower_off + 1, n_verts_lower))
+!            u = points((/1, 3/), base_idx + modulo(lower_off, n_verts_lower))
+!            v = points((/1, 3/), base_idx + n_verts_lower + modulo(upper_off, n_verts_upper))
+!            p = points((/1, 3/), base_idx + n_verts_lower + modulo(upper_off + 1, n_verts_upper))
+!            q = points((/1, 3/), base_idx + modulo(lower_off + 1, n_verts_lower))
+
+            u = points((/1, 2/), base_idx + modulo(lower_off, n_verts_lower))
+            v = points((/1, 2/), base_idx + n_verts_lower + modulo(upper_off, n_verts_upper))
+            p = points((/1, 2/), base_idx + n_verts_lower + modulo(upper_off + 1, n_verts_upper))
+            q = points((/1, 2/), base_idx + modulo(lower_off + 1, n_verts_lower))
             
             ! if ((q(1) - v(1))*(p(2) - v(2)) - (q(2) - v(2))*(p(1) - v(1)) > 0.d0) then
             !     print *, "ERROR: points in outer ring are too far apart or meshed in wrong coordinate system"
