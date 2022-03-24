@@ -15,6 +15,10 @@
     integer,public,protected  :: n2
     integer,public,protected  :: n3
 !
+    !Option for alternating number of vertices per ring (grid-alligned)
+    logical,public,protected :: alternating_vert_per_ring
+    integer,public,protected :: alternating_amplitude
+!
     !Grid Size - for practicability - NO input quantity
     !Rectangular grid: [n1,n2,n3] = [nR,nphi,nZ], Field-aligned grid: [n1,n2,n3] = [nr,nphi,ntheta]
     integer, dimension(3),public,protected  :: grid_size
@@ -41,7 +45,8 @@
     character(50),public,protected :: filename_mesh_rphiz,filename_mesh_sthetaphi
 !
     !Namelist for Tetrahedronal Grid input
-    NAMELIST /TETRA_GRID_NML/ n1, n2, n3, grid_kind,boole_n_field_periods,n_field_periods_manual,sfc_s_min, &
+    NAMELIST /TETRA_GRID_NML/ n1, n2, n3, alternating_vert_per_ring, alternating_amplitude, grid_kind,boole_n_field_periods, &
+                            & n_field_periods_manual,sfc_s_min, &
                             & boole_write_mesh_obj,filename_mesh_rphiz,filename_mesh_sthetaphi,theta_geom_flux,theta0_at_xpoint, &
                             & g_file_filename,convex_wall_filename,netcdf_filename
 !
