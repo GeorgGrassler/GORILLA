@@ -182,10 +182,11 @@ subroutine make_grid_aligned(grid_size,efit_vmec,n_field_periods)
     use constants, only: pi
     use circular_mesh, only : calc_mesh, create_points, calc_points_circular, calc_n_tetras, calc_n_verts
     use scaling_r_theta, only: scaling_r, scaling_theta
+    use tetra_grid_settings_mod, only: alternating_vert_per_ring, alternating_amplitude
 !
     implicit none
 !
-    integer:: i,j,k,l,i_vertex, ind_tetr
+    integer:: i,j,k,l,m,i_vertex, ind_tetr
     integer, intent(in) :: efit_vmec,n_field_periods
     integer, dimension(3), intent(in) :: grid_size
     integer, dimension(grid_size(1)) :: verts_per_ring
@@ -204,8 +205,13 @@ subroutine make_grid_aligned(grid_size,efit_vmec,n_field_periods)
     mesh_nr = grid_size(1)
     nphi = grid_size(2)
     mesh_ntheta = grid_size(3)
+
+    SWITCH_VERTEX_VAR: if (alternating_vert_per_ring) then
+        verts_per_ring = mesh_ntheta + (/ (modulo(m,2)*alternating_amplitude,m=1,mesh_nr) /)
+    else SWITCH_VERTEX_VAR
+        verts_per_ring = mesh_ntheta
+    end if SWITCH_VERTEX_VAR
 !
-    verts_per_ring = mesh_ntheta
 
     !Distinguish inbetween axisymmetric (EFIT) and non-axisymmetric (VMEC) data 
     select case(efit_vmec)
@@ -221,9 +227,13 @@ subroutine make_grid_aligned(grid_size,efit_vmec,n_field_periods)
                        repeat_center_point = .true.)
     end select
 !    
-    call calc_mesh(verts_per_ring, nphi, verts_rphiz(:, :nvert / nphi), ntetr, &
+!    call calc_mesh(verts_per_ring, nphi, verts_rphiz(:, :nvert / nphi), ntetr, &
+!                   verts, neighbours, neighbour_faces, perbou_phi, perbou_theta, &
+!                   repeat_center_point = .true.)
+
+    call calc_mesh(verts_per_ring, nphi, verts_sthetaphi(:, :nvert / nphi), ntetr, &
                    verts, neighbours, neighbour_faces, perbou_phi, perbou_theta, &
-                   repeat_center_point = .true.)
+                   repeat_center_point = .true.)               
 !
     allocate(tetra_grid(1:ntetr))
 !
