@@ -80,4 +80,28 @@ function check_orientation(i_triangle)
 
 end function check_orientation
 
+function check_quadra_decomp()
+        integer, dimension(:), allocatable :: check_quadra_decomp
+        integer, dimension(3) :: current_triangle, partner_triangle
+        integer :: m,n
+
+        if (.not. allocated(check_quadra_decomp)) then
+                allocate(check_quadra_decomp(shape_triangle_back_interp(1)))
+        end if
+
+        check_quadra_decomp = 0
+
+        do m = 1, shape_triangle_back_interp(1)
+                current_triangle = triangle_back_interp_EIRENE(m,:)
+                do n = m + 1, shape_triangle_back_interp(1)
+                        partner_triangle = triangle_back_interp_EIRENE(n,:)
+                        if (all(current_triangle == partner_triangle)) then
+                                check_quadra_decomp(m) = check_quadra_decomp(m) + 1
+                                check_quadra_decomp(n) = check_quadra_decomp(n) + 1
+                        end if
+                end do
+        end do
+
+end function check_quadra_decomp
+
 end module vertex_logic_mod

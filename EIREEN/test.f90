@@ -1,10 +1,12 @@
 program test
-    use vertex_logic_mod,  only: readin_data, check_orientation, triangles_EIRENE, shape_triangles
+    use vertex_logic_mod,  only: readin_data, check_orientation, check_quadra_decomp, &
+                                & triangles_EIRENE, shape_triangles
     implicit none
     integer :: i, j, k
     integer, dimension(:,:), allocatable :: diff
-    logical, dimension(:), allocatable :: check_list, check_list2
-    logical :: check_total, test1 = .false., test2 = .true.
+    logical, dimension(:), allocatable :: check_list
+    integer, dimension(:), allocatable :: check_list3
+    logical :: check_total, test1 = .false., test2 = .false., test3 = .true.
     logical :: check2 = .false.
 
     call readin_data()
@@ -34,7 +36,7 @@ program test
     end if VERTEX_TWIN_TEST
 
 
-    PAIR_TEST: if (test2) then
+    DREH_TEST: if (test2) then
         do i = 1, shape_triangles(1)
             check2 = check_orientation(i)
             if (.not. check2) then
@@ -43,6 +45,15 @@ program test
             end if
         end do
         print*, 'All triangles are counterclockwise!'
+    end if DREH_TEST
+
+    PAIR_TEST: if (test3) then
+        if (.not. allocated(check_list3)) allocate(check_list3(shape_triangles(1)))
+        check_list3 = check_quadra_decomp()
+        do i = 1, shape_triangles(1)
+            print*, 'Triangle ', i
+            print*, check_list3(i)
+        end do
     end if PAIR_TEST
 
 end program test
