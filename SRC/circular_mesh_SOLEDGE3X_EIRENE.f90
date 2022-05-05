@@ -25,7 +25,7 @@ subroutine create_points_SOLEDGE3X_EIRENE(n_slices, points_rphiz, verts_per_slic
 !
     !Define file ids and filenames for SOLEDGE3X_EIRENE mesh data
     file_id_knots = 501
-    filename_knots = './MHD_EQUILIBRIA/MESH_SOLEDGE3X_EIRENE/knots.dat'
+    filename_knots = './MHD_EQUILIBRIA/MESH_SOLEDGE3X_EIRENE/knots_for_test.dat'
 !
     !Load knots
     open(unit=file_id_knots, file=filename_knots, status='unknown')
@@ -90,7 +90,7 @@ subroutine calc_mesh_SOLEDGE3X_EIRENE(n_slices, points_rphiz, verts_per_slice, n
     enddo
 !
     file_id_triangles = 502
-    filename_triangles = './MHD_EQUILIBRIA/MESH_SOLEDGE3X_EIRENE/triangles.dat'
+    filename_triangles = './MHD_EQUILIBRIA/MESH_SOLEDGE3X_EIRENE/triangles_for_test.dat'
 !
     !Load triangles
     open(unit=file_id_triangles, file=filename_triangles, status='unknown')
