@@ -16,7 +16,7 @@ subroutine create_points_SOLEDGE3X_EIRENE(n_slices, points_rphiz, verts_per_slic
 !
     integer :: file_id_knots
     integer, dimension(2) :: shape_knots
-    character(50) :: filename_knots
+    character(70) :: filename_knots
     double precision, dimension(:,:),allocatable :: knots_SOLEDGE3X_EIRENE
 !
     integer :: n_verts,phi_position, i
@@ -73,7 +73,7 @@ subroutine calc_mesh_SOLEDGE3X_EIRENE(n_slices, points_rphiz, verts_per_slice, n
 !
     integer :: file_id_triangles
     integer, dimension(2) :: shape_triangles
-    character(50) :: filename_triangles
+    character(70) :: filename_triangles
     integer, dimension(:,:), allocatable :: triangle_type
 !
     integer, dimension(4, 6) :: tetra_conf, mask_theta, mask_phi, mask_r
