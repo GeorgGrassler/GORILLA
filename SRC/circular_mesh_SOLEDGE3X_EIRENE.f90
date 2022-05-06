@@ -249,7 +249,7 @@ subroutine calc_mesh_SOLEDGE3X_EIRENE(n_slices, points_rphiz, verts_per_slice, n
 !
 !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
-if(.true.) then
+if(.false.) then
 !if (allocated(count_connected)) deallocate(count_connected)
 !allocate(count_connected(n_triangles))
 count_connected = 0
@@ -386,7 +386,7 @@ close(123)
 !
     deallocate(triangles_SOLEDGE3X_EIRENE, triangle_type,count_connected)
 !
-stop
+!stop
 !
 end subroutine calc_mesh_SOLEDGE3X_EIRENE
 !
