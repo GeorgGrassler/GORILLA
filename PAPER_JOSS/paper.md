@@ -74,6 +74,8 @@ The integration process itself, however, can also be of great interest and a pro
 
 `GORILLA` has already been used by @eder_quasi-geometric_2020 for the application of collisionless guiding-center orbits in an axisymmetric tokamak and a realistic three-dimensional stellarator configuration. There, the code demonstrated stable long-term orbit dynamics conserving invariants.
 Further, in the same publication, `GORILLA` was applied to the Monte Carlo evaluation of transport coefficients. There, the computational efficiency of `GORILLA` was shown to be an order of magnitude higher than with a standard fourth order Runge–Kutta integrator.
+Codes[@pfefferle_venus-levis_2014], [@albert_symplectic_2020], [@hirvijoki_alfven_2012]
+
 Currently, `GORILLA` is part of the “EUROfusion Theory, Simulation, Validation and Verification Task for Impurity Sources, Transport, and Screening” where it is tested for the kinetic modelling of the impurity ion component. 
 The source code for `GORILLA` has been archived on Zenodo with the linked DOI: [@eder_gorilla_2021]
 
