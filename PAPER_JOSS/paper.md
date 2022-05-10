@@ -66,8 +66,6 @@ This leads to locally linear equations of motion with piecewise constant coeffic
 As shown by @eder_quasi-geometric_2020, this local linearization approach retains the Hamiltonian structure of the guiding-center equations. For practical purposes this means that the total energy, the magnetic moment and the phase space volume are conserved.
 Furthermore, the approach reduces computational effort and sensitivity to noise in the electromagnetic field. In `GORILLA` guiding-center orbits are computed without taking into account collisions in-between particles. Such exemplary guiding-center orbits obtained with `GORILLA` can be seen in \autoref{fig:example} where the magnetic field of a real-world fusion device is used, specifically the tokamak “ASDEX Upgrade”. 
 
-![Illustration of (a) passing particle and (b) trapped particle guiding-center orbits of a Deuterium ion with a kinetic energy of 3 keV in the axisymmetric magnetic field configuration of ASDEX Upgrade. The blue transparent area shows the poloidal $\varphi = 0$ plane with blue dots indicating the intersections of the orbit with this plane (Poincaré cut).  Red solid lines represent the guiding-center orbits.\label{fig:example}](figure.png)
-
 # Statement of need
 
 `GORILLA` is designed to be used by researchers in scientific plasma physics simulations in the field of magnetic confinement fusion. 
@@ -84,5 +82,7 @@ The source code for `GORILLA` has been archived on Zenodo with the linked DOI: [
 The authors would like to thank Michael Drevlak and the ASDEX Upgrade Team for providing the stellarator field configuration and the ASDEX Upgrade MHD equilibrium for shot 26884 at 4300 ms which are used in the code examples.
 Further thanks to Martin Heyn, Alex Runov, Philipp Ulbl, Rico Buchholz, Patrick Lainer, and Markus Richter for useful discussions.
 This work has been carried out within the framework of the EUROfusion Consortium, funded by the European Union via the Euratom Research and Training Programme (Grant Agreement No 101052200 — EUROfusion). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the European Commission. Neither the European Union nor the European Commission can be held responsible for them.
+
+![Illustration of (a) passing particle and (b) trapped particle guiding-center orbits of a Deuterium ion with a kinetic energy of 3 keV in the axisymmetric magnetic field configuration of ASDEX Upgrade. The blue transparent area shows the poloidal $\varphi = 0$ plane with blue dots indicating the intersections of the orbit with this plane (Poincaré cut).  Red solid lines represent the guiding-center orbits.\label{fig:example}](figure.png)
 
 # References
