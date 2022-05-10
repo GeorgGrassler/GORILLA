@@ -67,7 +67,6 @@ As shown by @eder_quasi-geometric_2020, this local linearization approach retain
 Furthermore, the approach reduces computational effort and sensitivity to noise in the electromagnetic field. In `GORILLA` guiding-center orbits are computed without taking into account collisions in-between particles. Such exemplary guiding-center orbits obtained with `GORILLA` can be seen in \autoref{fig:example} where the magnetic field of a real-world fusion device is used, specifically the tokamak “ASDEX Upgrade”. 
 
 ![Illustration of (a) passing particle and (b) trapped particle guiding-center orbits of a Deuterium ion with a kinetic energy of 3 keV in the axisymmetric magnetic field configuration of ASDEX Upgrade. The blue transparent area shows the poloidal $\varphi = 0$ plane with blue dots indicating the intersections of the orbit with this plane (Poincaré cut).  Red solid lines represent the guiding-center orbits.\label{fig:example}](figure.png)
-
 # Statement of need
 
 `GORILLA` is designed to be used by researchers in scientific plasma physics simulations in the field of magnetic confinement fusion. 
