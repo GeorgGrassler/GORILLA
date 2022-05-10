@@ -17,9 +17,6 @@ authors:
   - name: Michael Eder^[corresponding author]
     orcid: 0000-0002-1392-1664
     affiliation: 1
-  - name: Christopher G. Albert
-    orcid: 0000-0003-4773-416X
-    affiliation: 1
   - name: Lukas M. P. Bauer
     orcid: 0000-0003-3341-4085
     affiliation: 1
@@ -34,6 +31,9 @@ authors:
   - name:  Markus Meisterhofer
     affiliation: 1
   - name:  Michael Scheidt
+    affiliation: 1
+  - name: Christopher G. Albert
+    orcid: 0000-0003-4773-416X
     affiliation: 1
 
 affiliations:
