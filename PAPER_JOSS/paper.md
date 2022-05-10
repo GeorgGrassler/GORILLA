@@ -25,7 +25,7 @@ authors:
   - name: Georg S. Graßler
     affiliation: 1   
   - name:  Sergei V. Kasilov
-    affiliation: "1, 3, 4"
+    affiliation: "1, 2, 3"
   - name:  Winfried Kernbichler
     affiliation: 1
   - name:  Markus Meisterhofer
@@ -39,13 +39,11 @@ authors:
 affiliations:
  - name: Institut für Theoretische Physik - Computational Physics, Technische Universität Graz, Petersgasse 16, 8010 Graz, Austria
    index: 1
- - name: Max-Planck-Institut für Plasmaphysik, Boltzmannstr. 2, 85748 Garching, Germany
-   index: 2
  - name: Institute of Plasma Physics, National Science Center, “Kharkov Institute of Physics and Technology,” Akademicheskaya str. 1, 61108 Kharkov, Ukraine
-   index: 3
+   index: 2
  - name: Department of Applied Physics and Plasma Physics, V. N. Karazin Kharkov National University, Svobody sq. 4, 61022 Kharkov, Ukraine
-   index: 4
-date: 16 March 2021
+   index: 3
+date: 10 May 2022
 bibliography: paper.bib
 
 ---
