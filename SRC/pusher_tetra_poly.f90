@@ -36,8 +36,13 @@ module pusher_tetra_poly_mod
                                0.d0, 0.d0, 1.d0, 0.d0, &
                                0.d0, 0.d0, 0.d0, 1.d0 ], [4,4])
 !
+    !change those for adaptive step sizes, probably allocatable
+    double precision, dimension(2)                        :: tau_steps_list
+    double precision, dimension(4,2)                      :: intermediate_z0_list
+    integer                                               :: number_of_integration_steps
+!
     !$OMP THREADPRIVATE(ind_tetr,iface_init,perpinv,perpinv2,dt_dtau_const,bmod0,t_remain,x_init,  &
-    !$OMP& z_init,k1,k3,vmod0)
+    !$OMP& z_init,k1,k3,vmod0,tau_steps_list,intermediate_z0_list,number_of_integration_steps)
 !
     public :: pusher_tetra_poly,initialize_const_motion_poly, &
         & Quadratic_Solver2, Cubic_Solver, Quartic_Solver,analytic_integration_without_precomp,energy_tot_func
@@ -105,34 +110,46 @@ module pusher_tetra_poly_mod
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
         subroutine pusher_tetra_poly(poly_order,ind_tetr_inout,iface,x,vpar,z_save,t_remain_in,t_pass, &
-                                               & boole_t_finished,iper_phi)
+                        & boole_t_finished,iper_phi,optional_quantities)
 !
             use tetra_physics_mod, only: tetra_physics,particle_charge,particle_mass
             use gorilla_diag_mod,only: diag_pusher_tetry_poly
             use pusher_tetra_func_mod, only: pusher_handover2neighbour
-            use gorilla_settings_mod, only: i_precomp, boole_guess
+            use gorilla_settings_mod, only: i_precomp, boole_guess, optional_quantities_type, boole_array_optional_quantities
 !
             implicit none
 !
-            integer                                             :: poly_order
-            integer,intent(inout)                               :: ind_tetr_inout,iface
-            integer,intent(out)                                 :: iper_phi
-            double precision, dimension(3), intent(inout)       :: x
-            double precision, intent(inout)                     :: vpar
-            double precision, dimension(3), intent(out)         :: z_save
-            double precision, intent(in)                        :: t_remain_in
-            double precision, intent(out)                       :: t_pass
-            logical, intent(out)                                :: boole_t_finished
-            logical, dimension(4)                               :: boole_faces
-            integer                                             :: i,j,k
-            double precision, dimension(4)                      :: z,operator_b_in_b,z_dummy
-            integer                                             :: iface_new,i_scaling
-            double precision                                    :: tau,vperp2,tau_save,tau_est,tau_max
-            logical                                             :: boole_analytical_approx,boole_face_correct,boole_vnorm_correction
-            logical                                             :: boole_trouble_shooting
-            double precision,dimension(4,4)                     :: operator_b,operator_z_init
+            integer, intent(in)                                   :: poly_order
+            double precision, intent(in)                          :: t_remain_in
+!
+            integer,intent(inout)                                 :: ind_tetr_inout,iface
+            double precision, dimension(3), intent(inout)         :: x
+            double precision, intent(inout)                       :: vpar
+!
+            double precision, dimension(3), intent(out)           :: z_save
+            double precision, intent(out)                         :: t_pass
+            logical, intent(out)                                  :: boole_t_finished
+            integer,intent(out)                                   :: iper_phi
+            type(optional_quantities_type), intent(out),optional  :: optional_quantities
+!
+            logical, dimension(4)                                 :: boole_faces
+            integer                                               :: i,j,k
+            double precision, dimension(4)                        :: z,operator_b_in_b,z_dummy
+            integer                                               :: iface_new,i_scaling
+            double precision                                      :: tau,vperp2,tau_save,tau_est,tau_max
+            logical                                               :: boole_analytical_approx,boole_face_correct, &
+                                                                     & boole_vnorm_correction
+            logical                                               :: boole_trouble_shooting
+            double precision, dimension(4,4)                      :: operator_b,operator_z_init
 !         
             call initialize_pusher_tetra_poly(ind_tetr_inout,x,iface,vpar,t_remain_in)
+!
+            !initialise the module variables number_of_integration_steps, tau_steps_list and intermediate_z0_list
+            tau_steps_list = 0
+            intermediate_z0_list = 0
+            number_of_integration_steps = 0
+!
+            if (any(boole_array_optional_quantities)) call initialise_optional_quantities(optional_quantities)
 !
             !Initial computation values
             z = z_init
@@ -166,66 +183,41 @@ endif
             boole_trouble_shooting = .true.
 !
             !Set iface_new start value for polynomial approximation
-            iface_new = iface
+            iface_new = iface_init !instead of iface_new = iface
 !
             !boole_faces ... Boolean array for switching on/off root computation for individual face
             !Initialize boole_faces, such that roots for all 4 faces are computed
             boole_faces = .true.
 !
-            !Low order polynomial face prediction
-            if(boole_guess) then
+            !Analytical calculation of orbit parameter to guess exit face and estimate of tau
+            call analytic_approx(2,i_precomp,boole_faces, &
+            & i_scaling,z,iface_new,tau,boole_analytical_approx)
 !
-                !Analytical calculation of orbit parameter to guess exit face
-                call analytic_approx(2,i_precomp,boole_faces, &
-                                    & i_scaling,z,iface_new,tau,boole_analytical_approx)
+            !Define boundary for tau_max
+            tau_max = tau*eps_tau
 !
-                !Define boundary for tau_max
-                tau_max = tau*eps_tau
-                                    
 if(diag_pusher_tetry_poly) print *, 'boole_analytical_approx',boole_analytical_approx
-!               
-                !Higher order polynomial root is computed only for quadratically predicted face
-                if(poly_order.gt.2) then
-!    
-                    if(boole_analytical_approx) then
-                        boole_faces = .false.                !Disable all 4 faces 
-                        boole_faces(iface_new) = .true.      !Enable guessed face
-                        iface_new = iface                    !Set iface_new to entering iface
-!                    
-                        !Analytical calculation of orbit parameter to pass tetrahdron
-                        call analytic_approx(poly_order,i_precomp,boole_faces, &
-                                            & i_scaling,z,iface_new,tau,boole_analytical_approx)
-! 
+!
+            !use face prediction of second order for higher order computation (unneccessary if poly_order = 2)
+            if(boole_guess .and. boole_analytical_approx .and. (poly_order.gt.2)) then               
+                !Higher order polynomial root is computed only for previously predicted face in second order
+                boole_faces = .false.                !Disable all 4 faces 
+                boole_faces(iface_new) = .true.      !Enable guessed face
+!
 if(diag_pusher_tetry_poly) print *, 'tau',tau
 if(diag_pusher_tetry_poly) print *, 'iface guess', iface_new
 !
-                    else !No analytical approximation exists
-                        iface_new = iface   
-! 
-                        !Analytical calculation of orbit parameter to pass tetrahdron
-                        call analytic_approx(poly_order,i_precomp,boole_faces, &
-                                            & i_scaling,z,iface_new,tau,boole_analytical_approx)                  
-                    endif
+            endif   
+!           
+            !calculate exit time and exit face in higher order
+            !if a successful guess was made in second order, boole_faces only allows the guessed face 
+            if(poly_order.gt.2) then
+                iface_new = iface_init !instead of iface_new = iface 
 !                
-                endif
-!    
-            !No face guessing, instead roots are solved for all 4 faces
-            else
-                !Analytical calculation of orbit parameter for safety boundary
-                call analytic_approx(2,i_precomp,boole_faces, &
-                                    & i_scaling,z,iface_new,tau,boole_analytical_approx)
-!
-                !Define boundary for tau_max
-                tau_max = tau*eps_tau  
-                
-                if(poly_order.gt.2) then
-                    iface_new = iface  
-!                
-                    !Analytical calculation of orbit parameter to pass tetrahdron
-                    call analytic_approx(poly_order,i_precomp,boole_faces, &
-                                        & i_scaling,z,iface_new,tau,boole_analytical_approx)   
-                endif
-            endif        
+                !Analytical calculation of orbit parameter to pass tetrahdron
+                call analytic_approx(poly_order,i_precomp,boole_faces, &
+                                    & i_scaling,z,iface_new,tau,boole_analytical_approx)   
+            endif
 !
             !Initialize face error recognition procedure
             boole_face_correct = .true.
@@ -242,15 +234,9 @@ if(diag_pusher_tetry_poly) print *, 'Error in predicted integrator: Analytic app
             if(boole_face_correct) then
                 call analytic_integration(poly_order,i_precomp,z,tau)
 !
-                !Validation loop ('3-planes'-control)
-                three_planes_loop: do j=1,3                             !Just consider the planes without the "exit-plane"
-                    k=modulo(iface_new+j-1,4)+1
-                    if(normal_distance_func(z(1:3),k).lt.0.d0) then     !If distance is negative, exitpoint of the considered plane is outside the tetrahedron
-                        boole_face_correct = .false.
-if(diag_pusher_tetry_poly) print *, 'Error in predicted integrator: three planes'
-                    endif        
-                enddo three_planes_loop
-!
+                call check_three_planes(z,iface_new,boole_face_correct)
+                call check_face_convergence(z,iface_new,boole_face_correct)
+!                
                 !Accuracy on face
                 if(abs(normal_distance_func(z(1:3),iface_new)).gt.1.d-11) then
                     boole_face_correct = .false.

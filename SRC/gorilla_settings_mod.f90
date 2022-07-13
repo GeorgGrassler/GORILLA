@@ -3,6 +3,17 @@
 !
     implicit none
 !
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!
+    !optional quantities filled during a tetrahedron pushing
+    type optional_quantities_type
+        sequence
+        double precision :: t_hamiltonian     !real time of tetrahedron passing
+        double precision :: gyrophase         !gyrophase of particle
+    end type optional_quantities_type
+!
+!cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!
     private
 !
     !Electrostatic potential
@@ -31,6 +42,11 @@
     integer, public, protected :: i_precomp
     logical, public, protected :: boole_guess
 !
+    !additional optional orbit quantities
+    logical, public, protected :: boole_time_Hamiltonian
+    logical, public, protected :: boole_gyrophase
+    logical, public, protected, dimension(2) :: boole_array_optional_quantities
+!
     !Processing of particle handover to tetrahedron neighbour
     integer, public, protected :: handover_processing_kind
 !
@@ -54,9 +70,9 @@
                         & rel_err_ode45,boole_periodic_relocation,handover_processing_kind, boole_axi_noise_vector_pot, &
                         & boole_axi_noise_elec_pot, boole_non_axi_noise_vector_pot, axi_noise_eps_A, axi_noise_eps_Phi, &
                         & non_axi_noise_eps_A, boole_helical_pert, helical_pert_eps_Aphi, helical_pert_m_fourier, &
-                        & helical_pert_n_fourier
+                        & helical_pert_n_fourier, boole_time_Hamiltonian, boole_gyrophase
 !
-    public :: load_gorilla_inp,set_eps_Phi
+    public :: load_gorilla_inp,set_eps_Phi, optional_quantities_type
 !
     contains
 !
@@ -65,10 +81,22 @@
             open(unit=10, file='gorilla.inp', status='unknown')
             read(10,nml=gorillanml)
             close(10)
-
+!
             print *,'GORILLA: Loaded input data from gorilla.inp'
+!
+            call load_boole_array_optional_quantities
 !            
         end subroutine load_gorilla_inp
+!
+!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+!
+        subroutine load_boole_array_optional_quantities
+            implicit none
+
+            boole_array_optional_quantities(1) = boole_time_Hamiltonian
+            boole_array_optional_quantities(2) = boole_gyrophase
+
+        end subroutine load_boole_array_optional_quantities
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
