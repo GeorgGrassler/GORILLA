@@ -1924,10 +1924,6 @@ if(diag_pusher_tetry_poly) print *, 'boole',boole_approx,'dtau',dtau,'iface_new'
 !
         !recalculate polynomial coefficients (tensors) if more than one integration step was performed
         if (number_of_integration_steps .gt. 1) call set_integration_coef_manually(poly_order,z0)
-!
-        !Save coordinates before analytical integration
-        x0 = z0(1:3)
-        vpar0 = z0(4)
 
         !Optional computation of Hamiltonian time
         if(boole_time_Hamiltonian) then
@@ -1936,18 +1932,17 @@ if(diag_pusher_tetry_poly) print *, 'boole',boole_approx,'dtau',dtau,'iface_new'
             allocate(vpar_coef(poly_order+1))
             allocate(x_vpar_coef(3,poly_order+1))
 !
-            call x_series_coef(x_coef,poly_order,x0)
-            call vpar_series_coef(vpar_coef,poly_order,vpar0)
+            call z_series_coef(poly_order,z0,x_coef,vpar_coef)
 !
             call poly_multiplication_coef(x_coef(1,:),vpar_coef(:),x_vpar_coef(1,:))
             call poly_multiplication_coef(x_coef(2,:),vpar_coef(:),x_vpar_coef(2,:))
             call poly_multiplication_coef(x_coef(3,:),vpar_coef(:),x_vpar_coef(3,:))
 !
             delta_t_hamiltonian = hamiltonian_time(ind_tetr)%h1_in_curlA * tau + &
-            & cm_over_e * hamiltonian_time(ind_tetr)%h1_in_curlh * vpar_integral_without_precomp(poly_order,tau,vpar_coef)+&
-            & sum( hamiltonian_time(ind_tetr)%vec_mismatch_der * x_integral_without_precomp(poly_order,tau,x_coef) ) + &
+            & cm_over_e * hamiltonian_time(ind_tetr)%h1_in_curlh * scalar_integral_without_precomp(poly_order,tau,vpar_coef)+&
+            & sum( hamiltonian_time(ind_tetr)%vec_mismatch_der * vector_integral_without_precomp(poly_order,tau,x_coef) ) + &
             & cm_over_e * sum(hamiltonian_time(ind_tetr)%vec_parcurr_der *  &
-            & x_vpar_integral_without_precomp(poly_order,tau,x_vpar_coef))
+            & vector_integral_without_precomp(poly_order,tau,x_vpar_coef))
 !
             optional_quantities%t_hamiltonian = optional_quantities%t_hamiltonian + delta_t_hamiltonian
 !
@@ -1959,19 +1954,19 @@ if(diag_pusher_tetry_poly) print *, 'boole',boole_approx,'dtau',dtau,'iface_new'
                     & 1.d0/cm_over_e * tetra_physics(ind_tetr)%bmod1 * delta_t_hamiltonian + &
 !
                     !First term
-                    & 1.d0/cm_over_e * sum( tetra_physics(ind_tetr)%gb * x_integral_without_precomp(poly_order,tau,x_coef) ) * &
+                    & 1.d0/cm_over_e * sum( tetra_physics(ind_tetr)%gb * vector_integral_without_precomp(poly_order,tau,x_coef) ) *&
                     & hamiltonian_time(ind_tetr)%h1_in_curlA + &
 !
                     !Second term
-                    & sum(x_vpar_integral_without_precomp(poly_order,tau,x_vpar_coef) * tetra_physics(ind_tetr)%gb ) * &
+                    & sum(vector_integral_without_precomp(poly_order,tau,x_vpar_coef) * tetra_physics(ind_tetr)%gb ) * &
                     & hamiltonian_time(ind_tetr)%h1_in_curlh + &
 !
                     !Third term
-                    & 1.d0/cm_over_e * sum( matmul( xx_integral_without_precomp(poly_order,tau,x_coef) , &
+                    & 1.d0/cm_over_e * sum( matmul( tensor_integral_without_precomp(poly_order,tau,x_coef,x_coef) , &
                     & hamiltonian_time(ind_tetr)%vec_mismatch_der ) * tetra_physics(ind_tetr)%gb) + &
 !
                     !Fourth term
-                    & sum( matmul( xxvpar_integral_without_precomp( poly_order,tau,x_coef,x_vpar_coef), &
+                    & sum( matmul( tensor_integral_without_precomp(poly_order,tau,x_coef,x_vpar_coef), &
                     & hamiltonian_time(ind_tetr)%vec_parcurr_der ) *  tetra_physics(ind_tetr)%gb) &
                 & )
 
@@ -1985,151 +1980,57 @@ if(diag_pusher_tetry_poly) print *, 'boole',boole_approx,'dtau',dtau,'iface_new'
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
-    subroutine x_series_coef(x_coef,poly_order,x0)
+    subroutine z_series_coef(poly_order,z0,x_coef,vpar_coef)
 !
-        !This function shall only be called within the subroutine "analytic_integration_without_precomp"
-        !Values in modules are used that need to be precomputed in that subroutine.
+        !This function shall only be called within the subroutine "calc_optional_quantities"
+        !Values in modules are used that need to be precomputed/set in that subroutine.
 !
         use poly_without_precomp_mod, only: b, amat_in_z,amat2_in_z,amat3_in_z,amat_in_b,amat2_in_b, &
                                             & amat4_in_z,amat3_in_b
 !
         implicit none
 !
-        double precision, dimension(:,:),intent(out)    :: x_coef
         integer, intent(in)                             :: poly_order
-        double precision, dimension(3), intent(in)      :: x0
+        double precision, dimension(4), intent(in)      :: z0
 !
-        x_coef(:,1) = x0
+        double precision, dimension(:,:),intent(out)    :: x_coef
+        double precision, dimension(:),intent(out)      :: vpar_coef
+!
+        x_coef(:,1) = z0(1:3)
+        vpar_coef(1) = z0(4)
 !
         if(poly_order.ge.1) then
             x_coef(:,2) = b(1:3) + amat_in_z(1:3)
+            vpar_coef(2) = b(4) + amat_in_z(4)
         endif
 !
         if(poly_order.ge.2) then
             x_coef(:,3) = 0.5d0 * (amat_in_b(1:3) + amat2_in_z(1:3))
+            vpar_coef(3) = 0.5d0 * (amat_in_b(4) + amat2_in_z(4))
         endif
 !
         if(poly_order.ge.3) then
             x_coef(:,4) = 1.d0 / 6.d0 * (amat2_in_b(1:3) + amat3_in_z(1:3))
+            vpar_coef(4) = 1.d0 / 6.d0 * (amat2_in_b(4) + amat3_in_z(4))
         endif
 !
         if(poly_order.ge.4) then
             x_coef(:,5) = 1.d0 / 24.d0 * (amat3_in_b(1:3) + amat4_in_z(1:3))
+            vpar_coef(5) = 1.d0 / 24.d0 * (amat3_in_b(4) + amat4_in_z(4))
         endif
 !
-    end subroutine x_series_coef
+    end subroutine z_series_coef
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
-    subroutine vpar_series_coef(vpar_coef,poly_order,vpar0)
-!
-        !This function shall only be called within the subroutine "analytic_integration_without_precomp"
-        !Values in modules are used that need to be precomputed in that subroutine.
-!
-        use poly_without_precomp_mod, only: amat,b
-!
-        implicit none
-!
-        double precision, dimension(:),intent(out)      :: vpar_coef
-        integer, intent(in)                             :: poly_order
-        double precision, intent(in)                    :: vpar0
-        double precision                                :: a44,b4
-!
-        a44 = amat(4,4)
-        b4 = b(4)
-!
-        vpar_coef(1) = vpar0
-!
-        if(poly_order.ge.1) then
-            vpar_coef(2) = vpar0*a44 + b4
-        endif
-!
-        if(poly_order.ge.2) then
-            vpar_coef(3) = 0.5d0 * (vpar0 * a44**2 + a44 * b4)
-        endif
-!
-        if(poly_order.ge.3) then
-            vpar_coef(4) = 1.d0 / 6.d0 * (vpar0 * a44**3 + a44**2 * b4)
-        endif
-!
-        if(poly_order.ge.4) then
-            vpar_coef(5) = 1.d0 / 24.d0 * (vpar0 * a44**4 + a44**3 * b4)
-        endif
-
-    end subroutine vpar_series_coef
-!
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!
-    function x_integral_without_precomp(poly_order,tau,x_coef)
-!
-        !This function shall only be called within the subroutine "analytic_integration_without_precomp"
-        !Values in modules are used that need to be precomputed in that subroutine.
-!
-        implicit none
-!
-        integer, intent(in)                             :: poly_order
-        double precision, intent(in)                    :: tau
-        double precision, dimension(3)                  :: x_integral_without_precomp
-        double precision, dimension(:,:), intent(in)    :: x_coef
-!
-        if(poly_order.ge.1) then
-            x_integral_without_precomp = x_coef(:,1) * tau + x_coef(:,2) * 0.5d0 * tau**2
-        endif
-!
-        if(poly_order.ge.2) then
-            x_integral_without_precomp = x_integral_without_precomp + tau**3/3.d0 * x_coef(:,3)
-        endif
-!
-        if(poly_order.ge.3) then
-            x_integral_without_precomp = x_integral_without_precomp + tau**4/4.d0 * x_coef(:,4)
-        endif
-!
-        if(poly_order.ge.4) then
-            x_integral_without_precomp = x_integral_without_precomp + tau**5/5.d0 * x_coef(:,5)
-        endif
-
-    end function x_integral_without_precomp
-!
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!
-    function vpar_integral_without_precomp(poly_order,tau,vpar_coef)
-!
-        !This function shall only be called within the subroutine "analytic_integration_without_precomp"
-        !Values in modules are used that need to be precomputed in that subroutine.
-!
-        implicit none
-!
-        integer, intent(in)                         :: poly_order
-        double precision, intent(in)                :: tau
-        double precision, dimension(:),intent(in)   :: vpar_coef
-        double precision                            :: vpar_integral_without_precomp
-!
-        if(poly_order.ge.1) then
-            vpar_integral_without_precomp = vpar_coef(1)*tau + tau**2 * 0.5d0 * vpar_coef(2)
-        endif
-!
-        if(poly_order.ge.2) then
-            vpar_integral_without_precomp = vpar_integral_without_precomp + tau**3/3.d0 * vpar_coef(3)
-        endif
-!
-        if(poly_order.ge.3) then
-            vpar_integral_without_precomp = vpar_integral_without_precomp + tau**4/4.d0 * vpar_coef(4)
-        endif
-!
-        if(poly_order.ge.4) then
-            vpar_integral_without_precomp = vpar_integral_without_precomp + tau**5/5.d0 * vpar_coef(5)
-        endif
-!
-    end function vpar_integral_without_precomp
-!
-!ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
-!
-    subroutine poly_multiplication_coef(poly_coef_1,poly_coef_2,res_poly_coef)
+    pure subroutine poly_multiplication_coef(poly_coef_1,poly_coef_2,res_poly_coef)
 !
         implicit none
 !
         double precision, dimension(:),intent(in) :: poly_coef_1,poly_coef_2
+!
         double precision, dimension(:),intent(out) :: res_poly_coef
+!
         integer :: max_order,i,j,k,sz_1,sz_2,cur_order
         integer,dimension(:),allocatable :: poly_order_vec_1,poly_order_vec_2
 !
@@ -2172,141 +2073,91 @@ if(diag_pusher_tetry_poly) print *, 'boole',boole_approx,'dtau',dtau,'iface_new'
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
-    function x_vpar_integral_without_precomp(poly_order,tau,x_vpar_coef)
+    pure function scalar_integral_without_precomp(poly_order,tau,scalar_coef)
 !
-        !This function shall only be called within the subroutine "analytic_integration_without_precomp"
-        !Values in modules are used that need to be precomputed in that subroutine.
+        !This function shall only be called within the subroutine "calc_optional_quantities"
+        !Values in modules are used that need to be precomputed/set in that subroutine.
 !
         implicit none
 !
         integer, intent(in)                             :: poly_order
         double precision, intent(in)                    :: tau
-        double precision, dimension(3)                  :: x_vpar_integral_without_precomp
-        double precision, dimension(:,:), intent(in)    :: x_vpar_coef
+        double precision, dimension(:), intent(in)      :: scalar_coef
+!
+        double precision                                :: scalar_integral_without_precomp
 !
         if(poly_order.ge.1) then
-            x_vpar_integral_without_precomp = x_vpar_coef(:,1) * tau + x_vpar_coef(:,2) * 0.5d0 * tau**2
+            scalar_integral_without_precomp = scalar_coef(1)*tau + tau**2 * 0.5d0 * scalar_coef(2)
         endif
 !
         if(poly_order.ge.2) then
-            x_vpar_integral_without_precomp = x_vpar_integral_without_precomp + tau**3/3.d0 * x_vpar_coef(:,3)
+            scalar_integral_without_precomp = scalar_integral_without_precomp + tau**3/3.d0 * scalar_coef(3)
         endif
 !
         if(poly_order.ge.3) then
-            x_vpar_integral_without_precomp = x_vpar_integral_without_precomp + tau**4/4.d0 * x_vpar_coef(:,4)
+            scalar_integral_without_precomp = scalar_integral_without_precomp + tau**4/4.d0 * scalar_coef(4)
         endif
 !
         if(poly_order.ge.4) then
-            x_vpar_integral_without_precomp = x_vpar_integral_without_precomp + tau**5/5.d0 * x_vpar_coef(:,5)
+            scalar_integral_without_precomp = scalar_integral_without_precomp + tau**5/5.d0 * scalar_coef(5)
         endif
 !
-    end function x_vpar_integral_without_precomp
+    end function scalar_integral_without_precomp
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
-    function xx_integral_without_precomp(poly_order,tau,x_coef)
+    pure function vector_integral_without_precomp(poly_order,tau,vector_coef)
 !
-        !This function shall only be called within the subroutine "analytic_integration_without_precomp"
-        !Values in modules are used that need to be precomputed in that subroutine.
+        !This function shall only be called within the subroutine "calc_optional_quantities"
+        !Values in modules are used that need to be precomputed/set in that subroutine.
 !
         implicit none
 !
         integer, intent(in)                             :: poly_order
         double precision, intent(in)                    :: tau
-        double precision, dimension(3,3)                :: xx_integral_without_precomp
-        double precision, dimension(:,:), intent(in)    :: x_coef
-        double precision, dimension(:), allocatable     :: xx_coef_component
-        integer :: j,k
+        double precision, dimension(:,:), intent(in)    :: vector_coef
 !
-        allocate(xx_coef_component(poly_order+1))
+        double precision, dimension(3)                  :: vector_integral_without_precomp
 !
-        do j = 1,3
-            do k = 1,3
+        integer                                         :: i
 !
-                !Compute convolution of coefficient for one component
-                call poly_multiplication_coef(x_coef(j,:),x_coef(k,:),xx_coef_component)
+        forall(i = 1:3) vector_integral_without_precomp(i) = scalar_integral_without_precomp(poly_order,tau,vector_coef(i,:))
 !
-                xx_integral_without_precomp(j,k) = tau * xx_coef_component(1)
-!
-                if(poly_order.ge.1) then
-                    xx_integral_without_precomp(j,k) = xx_integral_without_precomp(j,k) +  &
-                        & tau**2 * 0.5d0 * xx_coef_component(2)
-                endif
-!
-                if(poly_order.ge.2) then
-                    xx_integral_without_precomp(j,k) = xx_integral_without_precomp(j,k) + &
-                        & tau**3 / 3.d0 * xx_coef_component(3)
-                endif
-!
-                if(poly_order.ge.3) then
-                    xx_integral_without_precomp(j,k) = xx_integral_without_precomp(j,k) + &
-                        & tau**4 / 4.d0 * xx_coef_component(4)
-                endif
-!
-                if(poly_order.ge.4) then
-                    xx_integral_without_precomp(j,k) = xx_integral_without_precomp(j,k) + &
-                        & tau**5 / 5.d0 * xx_coef_component(5)
-                endif
-!
-            enddo
-        enddo
-!
-        deallocate(xx_coef_component)
-!
-    end function xx_integral_without_precomp
+    end function vector_integral_without_precomp
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
-    function xxvpar_integral_without_precomp(poly_order,tau,x_coef,x_vpar_coef)
+    pure function tensor_integral_without_precomp(poly_order,tau,vector_coef_1,vector_coef_2)
 !
-        !This function shall only be called within the subroutine "analytic_integration_without_precomp"
-        !Values in modules are used that need to be precomputed in that subroutine.
+        !This function shall only be called within the subroutine "calc_optional_quantities"
+        !Values in modules are used that need to be precomputed/set in that subroutine.
 !
         implicit none
 !
         integer, intent(in)                             :: poly_order
         double precision, intent(in)                    :: tau
-        double precision, dimension(3,3)                :: xxvpar_integral_without_precomp
-        double precision, dimension(:,:), intent(in)    :: x_coef,x_vpar_coef
-        double precision, dimension(:), allocatable     :: xxvpar_coef_component
+        double precision, dimension(:,:), intent(in)    :: vector_coef_1,vector_coef_2
+!
+        double precision, dimension(3,3)                :: tensor_integral_without_precomp
+        double precision, dimension(:), allocatable     :: tensor_component_coef
         integer :: j,k
 !
-        allocate(xxvpar_coef_component(poly_order+1))
+        allocate(tensor_component_coef(poly_order+1))
 !
         do j = 1,3
             do k = 1,3
 !
                 !Compute convolution of coefficient for one component
-                call poly_multiplication_coef(x_vpar_coef(j,:),x_coef(k,:),xxvpar_coef_component)
+                call poly_multiplication_coef(vector_coef_1(j,:),vector_coef_2(k,:),tensor_component_coef)
 !
-                xxvpar_integral_without_precomp(j,k) = tau * xxvpar_coef_component(1)
-!
-                if(poly_order.ge.1) then
-                    xxvpar_integral_without_precomp(j,k) = xxvpar_integral_without_precomp(j,k) +  &
-                        & tau**2 * 0.5d0 * xxvpar_coef_component(2)
-                endif
-!
-                if(poly_order.ge.2) then
-                    xxvpar_integral_without_precomp(j,k) = xxvpar_integral_without_precomp(j,k) + &
-                        & tau**3 / 3.d0 * xxvpar_coef_component(3)
-                endif
-!
-                if(poly_order.ge.3) then
-                    xxvpar_integral_without_precomp(j,k) = xxvpar_integral_without_precomp(j,k) + &
-                        & tau**4 / 4.d0 * xxvpar_coef_component(4)
-                endif
-!
-                if(poly_order.ge.4) then
-                    xxvpar_integral_without_precomp(j,k) = xxvpar_integral_without_precomp(j,k) + &
-                        & tau**5 / 5.d0 * xxvpar_coef_component(5)
-                endif
+                tensor_integral_without_precomp(j,k) = scalar_integral_without_precomp(poly_order,tau,tensor_component_coef)
 !
             enddo
         enddo
 !
-        deallocate(xxvpar_coef_component)
+        deallocate(tensor_component_coef)
 !
-    end function xxvpar_integral_without_precomp
+    end function tensor_integral_without_precomp
 !
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 !
